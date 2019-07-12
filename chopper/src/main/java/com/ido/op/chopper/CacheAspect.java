@@ -9,22 +9,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Aspect
 @Component
 public class CacheAspect implements ApplicationContextAware {
-   private  Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LoggerFactory.getLogger(this.getClass());
     private ApplicationContext applicationContext;
-    private ConcurrentMap<Class, CacheMap<String, Object>> cacheTable = new ConcurrentHashMap<>();
+
+    @Autowired
+    private CacheManager cacheManager;
 
     @Pointcut("@annotation(com.ido.op.chopper.Cacheable)")
     private void Intercepter() {
@@ -41,12 +41,6 @@ public class CacheAspect implements ApplicationContextAware {
             for (Annotation a : annotations) {
                 if (a instanceof Cacheable) {
                     Cacheable ca = ((Cacheable) a);
-                    String prefix = ca.keyPrefix();
-
-
-                    if (StringUtils.isEmpty(prefix)) {
-                        prefix = method.getName();
-                    }
                     KeyStrategy keyStrategy;
                     try {
                         keyStrategy = (KeyStrategy) applicationContext.getBean(ca.keyStrategy());
@@ -54,38 +48,24 @@ public class CacheAspect implements ApplicationContextAware {
                         log.warn(" cache key strategy not found {} ", ca.keyStrategy().getName());
                         return joinpoint.proceed();
                     }
-                    String key ;
-                    if(ca.key().length() == 0){
-                        key = prefix + ":" + keyStrategy.getKey(args);
-                    }else {
+                    String key;
+                    if (ca.key().length() == 0) {
+                        key = keyStrategy.getKey(joinpoint.getTarget(), method, args);
+                    } else {
                         key = ca.key();
                     }
-
-                    CacheMap<String, Object> clxTable = cacheTable.get(method.getDeclaringClass());
-                    if (clxTable != null) {
-                        Object cacheResult = clxTable.get(key);
-                        if (cacheResult != null) {
-                            if (log.isDebugEnabled()) {
-                                log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), key);
-                            }
-                            return cacheResult;
-
+                    Object cacheResult = cacheManager.get(key);
+                    if (cacheResult != null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), key);
                         }
-                        Object rtv = joinpoint.proceed();
-                        long expiredTime = ca.expireTime();
-                        clxTable.put(key, rtv,expiredTime);
-
-                        return rtv;
-
-
-                    }else{
-                        Object rtv = joinpoint.proceed();
-                        long expiredTime = ca.expireTime();
-                        clxTable = new CacheMap<>();
-                        clxTable.put(key, rtv,expiredTime);
-                        cacheTable.put(method.getDeclaringClass(), clxTable);
-                        return rtv;
+                        return cacheResult;
                     }
+
+                    Object rtv = joinpoint.proceed();
+                    long expiredTime = ca.expireTime();
+                    cacheManager.put(key, rtv, expiredTime);
+                    return rtv;
 
 
                 }

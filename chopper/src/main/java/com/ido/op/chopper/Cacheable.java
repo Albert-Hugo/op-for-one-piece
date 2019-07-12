@@ -18,12 +18,10 @@ public @interface Cacheable {
     String key() default "";
 
     /**
-     * default will be using the method name
+     * key strategy to generate key
      *
      * @return
      */
-    String keyPrefix() default "";
-
     Class keyStrategy() default AllParameterKeyStrategy.class;
 
     /**
