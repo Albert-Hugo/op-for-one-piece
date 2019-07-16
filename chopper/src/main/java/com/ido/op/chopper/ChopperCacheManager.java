@@ -4,7 +4,7 @@ package com.ido.op.chopper;
  * @author Carl
  * @date 2019/7/12
  */
-public interface CacheManager {
+public interface ChopperCacheManager {
 
     Object get(Object k);
 

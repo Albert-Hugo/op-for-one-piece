@@ -7,11 +7,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.Annotation;
@@ -19,12 +15,15 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Component
-public class CacheAspect implements ApplicationContextAware {
+public class CacheAspect {
     private Logger log = LoggerFactory.getLogger(this.getClass());
-    private ApplicationContext applicationContext;
 
-    @Autowired
-    private CacheManager cacheManager;
+    private ChopperCacheManager chopperCacheManager;
+    private KeyStrategy keyStrategy;
+
+    public CacheAspect(ChopperCacheManager chopperCacheManager) {
+        this.chopperCacheManager = chopperCacheManager;
+    }
 
     @Pointcut("@annotation(com.ido.op.chopper.Cacheable)")
     private void Intercepter() {
@@ -41,20 +40,18 @@ public class CacheAspect implements ApplicationContextAware {
             for (Annotation a : annotations) {
                 if (a instanceof Cacheable) {
                     Cacheable ca = ((Cacheable) a);
-                    KeyStrategy keyStrategy;
-                    try {
-                        keyStrategy = (KeyStrategy) applicationContext.getBean(ca.keyStrategy());
-                    } catch (NoSuchBeanDefinitionException e) {
+                    if (ca.key().length() == 0 && keyStrategy == null) {
                         log.warn(" cache key strategy not found {} ", ca.keyStrategy().getName());
                         return joinpoint.proceed();
                     }
+
                     String key;
                     if (ca.key().length() == 0) {
                         key = keyStrategy.getKey(joinpoint.getTarget(), method, args);
                     } else {
                         key = ca.key();
                     }
-                    Object cacheResult = cacheManager.get(key);
+                    Object cacheResult = chopperCacheManager.get(key);
                     if (cacheResult != null) {
                         if (log.isDebugEnabled()) {
                             log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), key);
@@ -64,7 +61,7 @@ public class CacheAspect implements ApplicationContextAware {
 
                     Object rtv = joinpoint.proceed();
                     long expiredTime = ca.expireTime();
-                    cacheManager.put(key, rtv, expiredTime);
+                    chopperCacheManager.put(key, rtv, expiredTime);
                     return rtv;
 
 
@@ -75,8 +72,9 @@ public class CacheAspect implements ApplicationContextAware {
         return joinpoint.proceed();
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+
+    @Autowired
+    public void setKeyStrategy(KeyStrategy keyStrategy) {
+        this.keyStrategy = keyStrategy;
     }
 }

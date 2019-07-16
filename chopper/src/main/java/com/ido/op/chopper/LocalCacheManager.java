@@ -4,7 +4,7 @@ package com.ido.op.chopper;
  * @author Carl
  * @date 2019/7/12
  */
-public class LocalCacheManager implements CacheManager {
+public class LocalCacheManager implements ChopperCacheManager {
 
     private CacheMap<Object, Object> cacheTable = new CacheMap<>();
 

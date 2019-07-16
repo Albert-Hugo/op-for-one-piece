@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.ido.op.chopper.MemCacheAutoConfig
+com.ido.op.chopper.ChopperAutoConfig

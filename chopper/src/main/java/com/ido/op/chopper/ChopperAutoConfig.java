@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * @date 2019/7/12
  */
 @Configuration
-public class MemCacheAutoConfig {
+public class ChopperAutoConfig {
 
     @Bean
     @ConditionalOnMissingBean()
@@ -21,8 +21,8 @@ public class MemCacheAutoConfig {
 
 
     @Bean
-    @ConditionalOnMissingBean()
-    public CacheManager cacheManager() {
+    @ConditionalOnMissingBean(value = ChopperCacheManager.class)
+    public ChopperCacheManager chopperCacheManager() {
         return new LocalCacheManager();
 
 
