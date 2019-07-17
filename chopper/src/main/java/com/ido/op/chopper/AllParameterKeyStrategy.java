@@ -14,7 +14,7 @@ public class AllParameterKeyStrategy implements KeyStrategy {
                 .append(method.getName())
                 .append(":");
         for (Object o : params) {
-            key.append(o.toString()).append(":");
+            key.append(o!=null?o.toString():"null").append(":");
         }
         return key.toString();
     }
