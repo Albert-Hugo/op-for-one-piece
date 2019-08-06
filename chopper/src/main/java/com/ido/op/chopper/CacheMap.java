@@ -45,7 +45,7 @@ public class CacheMap<K, V> {
             if (expireTime == NEVER_EXPIRE) {
                 return false;
             }
-            return (System.currentTimeMillis() - this.storeTime) > expireTime;
+            return (System.currentTimeMillis()/1000 - this.storeTime) > expireTime;
         }
 
 
@@ -74,7 +74,7 @@ public class CacheMap<K, V> {
      * @return
      */
     public V put(K key, V value, long expireTime) {
-        MetaData<V> previousValue = map.put(key, new MetaData<>(value, System.currentTimeMillis(), expireTime));
+        MetaData<V> previousValue = map.put(key, new MetaData<>(value, System.currentTimeMillis()/1000, expireTime));
         return previousValue == null ? null : previousValue.value;
     }
 
