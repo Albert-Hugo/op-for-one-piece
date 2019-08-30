@@ -17,6 +17,8 @@ public @interface Cacheable {
      */
     String key() default "";
 
+    String keyPrefix() default "";
+
     /**
      * key strategy to generate key
      *

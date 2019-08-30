@@ -51,7 +51,8 @@ public class CacheAspect {
                     } else {
                         key = ca.key();
                     }
-                    Object cacheResult = chopperCacheManager.get(key);
+                    final String ck = ca.keyPrefix() + key;
+                    Object cacheResult = chopperCacheManager.get(ck);
                     if (cacheResult != null) {
                         if (log.isDebugEnabled()) {
                             log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), key);
@@ -61,7 +62,7 @@ public class CacheAspect {
 
                     Object rtv = joinpoint.proceed();
                     long expiredTime = ca.expireTime();
-                    chopperCacheManager.put(key, rtv, expiredTime);
+                    chopperCacheManager.put(ck, rtv, expiredTime);
                     return rtv;
 
 
