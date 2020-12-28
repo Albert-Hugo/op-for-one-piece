@@ -8,6 +8,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.Annotation;
@@ -15,6 +16,7 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Component
+@Order
 public class CacheAspect {
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
