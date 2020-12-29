@@ -16,8 +16,8 @@ public class LocalCacheManager implements ChopperCacheManager {
     }
 
     @Override
-    public Object put(String k, Object v, long expireTime) {
-        return cacheTable.put(k, v, expireTime);
+    public void put(String k, Object v, long expireTime) {
+        cacheTable.put(k, v, expireTime);
     }
 
     @Override
