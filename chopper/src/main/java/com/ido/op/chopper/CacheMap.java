@@ -1,5 +1,7 @@
 package com.ido.op.chopper;
 
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -25,18 +27,20 @@ public class CacheMap<K, V> {
         this.removeListener = listener;
     }
 
+
+    public Set<Entry<K, MetaData<V>>> entrySet(){
+        return map.entrySet();
+    }
     interface RemoveListener<K, V> {
         void onRemove(K k, V v);
     }
 
 
     private class MetaData<V> {
-        long storeTime;
         long expireTime;
         V value;
 
-        MetaData(V value, long storeTime, long expireTime) {
-            this.storeTime = storeTime;
+        MetaData(V value, long expireTime) {
             this.expireTime = expireTime;
             this.value = value;
         }
@@ -45,10 +49,15 @@ public class CacheMap<K, V> {
             if (expireTime == NEVER_EXPIRE) {
                 return false;
             }
-            return (System.currentTimeMillis()/1000 - this.storeTime) > expireTime;
+            return System.currentTimeMillis() > expireTime;
         }
 
 
+    }
+
+    public void expire(String k) {
+        MetaData<V> md = map.get(k);
+        md.expireTime = -2;
     }
 
     public V get(K key) {
@@ -74,7 +83,7 @@ public class CacheMap<K, V> {
      * @return
      */
     public V put(K key, V value, long expireTime) {
-        MetaData<V> previousValue = map.put(key, new MetaData<>(value, System.currentTimeMillis()/1000, expireTime));
+        MetaData<V> previousValue = map.put(key, new MetaData<>(value, System.currentTimeMillis() + expireTime));
         return previousValue == null ? null : previousValue.value;
     }
 

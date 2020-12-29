@@ -28,10 +28,34 @@ public class CacheAspect {
     }
 
     @Pointcut("@annotation(com.ido.op.chopper.Cacheable)")
-    private void Intercepter() {
+    private void IntercepterCacheable() {
     }
 
-    @Around(value = "Intercepter()")
+    @Pointcut("@annotation(com.ido.op.chopper.CacheExpire)")
+    private void IntercepterCacheExpire() {
+    }
+
+    @Around(value = "IntercepterCacheExpire()")
+    public Object expire(ProceedingJoinPoint joinpoint) throws Throwable {
+        Method method = ((MethodSignature) joinpoint.getSignature()).getMethod();
+
+        Annotation[] annotations = method.getDeclaredAnnotations();
+        if (annotations != null && annotations.length > 0) {
+
+            for (Annotation a : annotations) {
+                if (a instanceof CacheExpire) {
+                    CacheExpire ca = ((CacheExpire) a);
+                    String keyPrefix = ca.keyPrefix();
+                    chopperCacheManager.expire(keyPrefix);
+                }
+            }
+        }
+
+        return joinpoint.proceed();
+    }
+
+
+    @Around(value = "IntercepterCacheable()")
     public Object cache(ProceedingJoinPoint joinpoint) throws Throwable {
         Method method = ((MethodSignature) joinpoint.getSignature()).getMethod();
 
