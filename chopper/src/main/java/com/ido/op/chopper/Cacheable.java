@@ -17,6 +17,10 @@ public @interface Cacheable {
      */
     String key() default "";
 
+    /**
+     * key prifix
+     * @return
+     */
     String keyPrefix() default "";
 
     /**
@@ -25,6 +29,13 @@ public @interface Cacheable {
      * @return
      */
     Class keyStrategy() default AllParameterKeyStrategy.class;
+
+    /**
+     * specific cache manager for specific key
+     *
+     * @return
+     */
+    Class cacheManager() default void.class;
 
     /**
      * 0 means will not expired

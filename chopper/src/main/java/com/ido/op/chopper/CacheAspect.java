@@ -7,7 +7,10 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -17,11 +20,12 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 @Order
-public class CacheAspect {
+public class CacheAspect implements ApplicationContextAware {
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
     private ChopperCacheManager chopperCacheManager;
     private KeyStrategy keyStrategy;
+    private ApplicationContext applicationContext;
 
     public CacheAspect(ChopperCacheManager chopperCacheManager) {
         this.chopperCacheManager = chopperCacheManager;
@@ -78,7 +82,14 @@ public class CacheAspect {
                         key = ca.key();
                     }
                     final String ck = ca.keyPrefix() + key;
-                    Object cacheResult = chopperCacheManager.get(ck);
+                    ChopperCacheManager cacheManager = chopperCacheManager;
+                    if (!ca.cacheManager().equals(Void.class)) {
+                        Object m = this.applicationContext.getBean(ca.cacheManager());
+                        if (m instanceof ChopperCacheManager) {
+                            cacheManager = (ChopperCacheManager) m;
+                        }
+                    }
+                    Object cacheResult = cacheManager.get(ck);
                     if (cacheResult != null) {
                         if (log.isDebugEnabled()) {
                             log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), key);
@@ -88,7 +99,7 @@ public class CacheAspect {
 
                     Object rtv = joinpoint.proceed();
                     long expiredTime = ca.expireTime();
-                    chopperCacheManager.put(ck, rtv, expiredTime);
+                    cacheManager.put(ck, rtv, expiredTime);
                     return rtv;
 
 
@@ -103,5 +114,10 @@ public class CacheAspect {
     @Autowired
     public void setKeyStrategy(KeyStrategy keyStrategy) {
         this.keyStrategy = keyStrategy;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }
