@@ -81,7 +81,7 @@ public class CacheAspect implements ApplicationContextAware {
                     } else {
                         key = ca.key();
                     }
-                    final String ck = ca.keyPrefix() + key;
+                    final String finalKey = ca.keyPrefix() + key;
                     ChopperCacheManager cacheManager = chopperCacheManager;
                     if (!ca.cacheManager().equals(Void.class)) {
                         Object m = this.applicationContext.getBean(ca.cacheManager());
@@ -89,17 +89,17 @@ public class CacheAspect implements ApplicationContextAware {
                             cacheManager = (ChopperCacheManager) m;
                         }
                     }
-                    Object cacheResult = cacheManager.get(ck);
+                    Object cacheResult = cacheManager.get(finalKey);
                     if (cacheResult != null) {
                         if (log.isDebugEnabled()) {
-                            log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), key);
+                            log.debug(" get result from cache , class {}, key {}", method.getDeclaringClass().getName(), finalKey);
                         }
                         return cacheResult;
                     }
 
                     Object rtv = joinpoint.proceed();
                     long expiredTime = ca.expireTime();
-                    cacheManager.put(ck, rtv, expiredTime);
+                    cacheManager.put(finalKey, rtv, expiredTime);
                     return rtv;
 
 
