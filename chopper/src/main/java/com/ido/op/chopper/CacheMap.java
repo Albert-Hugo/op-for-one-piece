@@ -28,9 +28,10 @@ public class CacheMap<K, V> {
     }
 
 
-    public Set<Entry<K, MetaData<V>>> entrySet(){
+    public Set<Entry<K, MetaData<V>>> entrySet() {
         return map.entrySet();
     }
+
     interface RemoveListener<K, V> {
         void onRemove(K k, V v);
     }
@@ -83,7 +84,12 @@ public class CacheMap<K, V> {
      * @return
      */
     public V put(K key, V value, long expireTime) {
-        MetaData<V> previousValue = map.put(key, new MetaData<>(value, System.currentTimeMillis() + expireTime));
+        MetaData<V> previousValue;
+        if (expireTime == NEVER_EXPIRE) {
+            previousValue = map.put(key, new MetaData<>(value, NEVER_EXPIRE));
+        } else {
+            previousValue = map.put(key, new MetaData<>(value, System.currentTimeMillis() + NEVER_EXPIRE));
+        }
         return previousValue == null ? null : previousValue.value;
     }
 

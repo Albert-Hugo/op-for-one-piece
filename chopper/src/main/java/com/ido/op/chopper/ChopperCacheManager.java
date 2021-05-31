@@ -11,9 +11,9 @@ public interface ChopperCacheManager {
     void put(String k, Object v, long expireTime);
 
     /**
-     * 使前缀为 kPrefix 的数据过期
+     * 使 符合 pattern 的数据过期
      *
-     * @param kPrefix
+     * @param keyPattern
      */
-    void expire(String kPrefix);
+    void expire(String keyPattern);
 }

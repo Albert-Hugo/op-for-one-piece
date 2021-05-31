@@ -21,10 +21,10 @@ public class LocalCacheManager implements ChopperCacheManager {
     }
 
     @Override
-    public void expire(String kPrefix) {
+    public void expire(String keyPattern) {
         for (Map.Entry entry : cacheTable.entrySet()) {
             String k = (String) entry.getKey();
-            if (k.startsWith(kPrefix)) {
+            if (k.matches(keyPattern)) {
                 cacheTable.expire(k);
             }
         }

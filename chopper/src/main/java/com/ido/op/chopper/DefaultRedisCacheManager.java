@@ -28,10 +28,9 @@ public class DefaultRedisCacheManager implements ChopperCacheManager {
     }
 
     @Override
-    public void expire(String kPrefix) {
-        String kPattern = kPrefix + "*";
+    public void expire(final String keyPattern) {
         redisTemplate.execute((RedisCallback) connection -> {
-            Set<byte[]> keys = connection.keys(kPattern.getBytes());
+            Set<byte[]> keys = connection.keys(keyPattern.getBytes());
             for (byte[] bs : keys) {
                 redisTemplate.expire(new String(bs), 0, TimeUnit.SECONDS);
             }

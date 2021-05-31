@@ -12,7 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -26,6 +32,9 @@ public class CacheAspect implements ApplicationContextAware {
     private ChopperCacheManager chopperCacheManager;
     private KeyStrategy keyStrategy;
     private ApplicationContext applicationContext;
+
+    SpelExpressionParser parser = new SpelExpressionParser();
+
 
     public CacheAspect(ChopperCacheManager chopperCacheManager) {
         this.chopperCacheManager = chopperCacheManager;
@@ -44,19 +53,48 @@ public class CacheAspect implements ApplicationContextAware {
         Method method = ((MethodSignature) joinpoint.getSignature()).getMethod();
 
         Annotation[] annotations = method.getDeclaredAnnotations();
+        String expression = "";
+        String keyPattern = "";
         if (annotations != null && annotations.length > 0) {
 
             for (Annotation a : annotations) {
                 if (a instanceof CacheExpire) {
                     CacheExpire ca = ((CacheExpire) a);
-                    String keyPrefix = ca.keyPrefix();
-                    chopperCacheManager.expire(keyPrefix);
+                    expression = ca.elExpression();
+                    keyPattern = ca.keyPattern();
                 }
             }
         }
 
-        return joinpoint.proceed();
+        Object result = joinpoint.proceed();
+
+        if (!StringUtils.isEmpty(expression)) {
+            Expression ex = parser.parseExpression(expression);
+            EvaluationContext context = new StandardEvaluationContext();
+            String exResult = ex.getValue(context, result, String.class);
+            keyPattern = keyPattern.replace("#{item}", exResult);
+        }
+
+        // ^id$   item.id
+        chopperCacheManager.expire(keyPattern);
+
+
+        return result;
     }
+
+
+    public static class Test {
+        String id;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+    }
+
 
 
     @Around(value = "IntercepterCacheable()")
@@ -83,7 +121,7 @@ public class CacheAspect implements ApplicationContextAware {
                     }
                     final String finalKey = ca.keyPrefix() + key;
                     ChopperCacheManager cacheManager = chopperCacheManager;
-                    if (!ca.cacheManager().equals(Void.class)) {
+                    if (!ca.cacheManager().equals(void.class)) {
                         Object m = this.applicationContext.getBean(ca.cacheManager());
                         if (m instanceof ChopperCacheManager) {
                             cacheManager = (ChopperCacheManager) m;
