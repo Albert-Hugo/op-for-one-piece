@@ -10,6 +10,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Cacheable {
 
+    long NEVER_EXPIRE = 0;
+
     /**
      * if key is empty , then will using key strategy to generate key
      *
@@ -43,7 +45,7 @@ public @interface Cacheable {
      *
      * @return
      */
-    long expireTime() default 0;
+    long expireTime() default NEVER_EXPIRE;
 
 
 }

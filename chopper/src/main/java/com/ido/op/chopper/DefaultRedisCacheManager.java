@@ -6,6 +6,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.ido.op.chopper.Cacheable.NEVER_EXPIRE;
+
 /**
  * @author Ido
  * @date 2020/12/29 10:47
@@ -24,7 +26,11 @@ public class DefaultRedisCacheManager implements ChopperCacheManager {
 
     @Override
     public void put(String k, Object v, long expireTime) {
-        redisTemplate.opsForValue().set(k, v, expireTime, TimeUnit.SECONDS);
+        if (expireTime == NEVER_EXPIRE) {
+            redisTemplate.opsForValue().set(k, v);
+        } else {
+            redisTemplate.opsForValue().set(k, v, expireTime, TimeUnit.SECONDS);
+        }
     }
 
     @Override

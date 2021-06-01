@@ -5,12 +5,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.ido.op.chopper.Cacheable.NEVER_EXPIRE;
+
 /**
  * @author Carl
  * @date 2019/7/11
  */
 public class CacheMap<K, V> {
-    private static final long NEVER_EXPIRE = 0;
 
     private ConcurrentMap<K, MetaData<V>> map = new ConcurrentHashMap<>();
     /**
